@@ -1,0 +1,7 @@
+.hg*
+*.beam
+erl_crash.dump
+ebin/*
+deps/*
+priv/log/*
+src/priv/log/*

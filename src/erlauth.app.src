@@ -1,0 +1,21 @@
+%%-*- mode: erlang -*-
+{application, erlauth,
+ [
+  {description, "erlang authentication"},
+  {vsn, "1"},
+  {modules,[authn,
+            auth_resource,
+            auth_store_file,
+            erlauth_app,
+            erlauth_sup,
+            user,
+            util]},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  crypto
+                 ]},
+  {mod, { erlauth_app, []}},
+  {env, []}
+ ]}.
