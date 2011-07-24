@@ -2,7 +2,7 @@
 
 -export([start/0, stop/0, restart/0]).
 
--define(DEPS, [crypto]).
+-define(DEPS, [crypto, bcrypt]).
 
 start() ->
   start_deps(),
