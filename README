@@ -1,0 +1,5 @@
+ERLAUTH - Authentication Plugin for Webmachine
+
+not completed yet, I wouldn't recommend using this.  If you must, take a look at its use in github.com/boorad/koth
+
+released under Apache License, Version 2.0

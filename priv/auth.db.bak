@@ -1,7 +1,0 @@
-{users,[{user,1,"brad@sankatygroup.com",
-              "$2a$12$RD4Df9ypYF2TbVBHfXeqhedvDw4fvrpOINJTviukumm0mGpDmGgBC",
-              "fb76b80a6ee7235e16979de188743d116f48969d",
-              {struct,[{<<"first">>,<<"Brad">>},
-                       {<<"last">>,<<"Anderson">>},
-                       {<<"timezone">>,<<"-5:00">>}]},
-              true}]}.
