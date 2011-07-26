@@ -1,7 +1,6 @@
 -module(auth_store_file).
 
--export([get_user/2, set_user/2,
-         set_cookie_hash/2]).
+-export([get_user/2, update_user/3, add_user/1]).
 
 -include("erlauth.hrl").
 
@@ -14,11 +13,11 @@ get_user(id, Id) ->
 get_user(name, Name) ->
   file_op(fun lookup_user/3, [3, Name]).
 
-set_user(User, Hash) ->
-  file_op(fun write_user/3, [User, Hash]).
+update_user(Field, UserId, Value) ->
+  file_op(fun write_user_field/4, [Field, UserId, Value]).
 
-set_cookie_hash(UserId, CookieHash) ->
-  file_op(fun write_cookie_hash/3, [UserId, CookieHash]).
+add_user(User) ->
+  file_op(fun write_user_all/2, [User]).
 
 %%
 %% internal
@@ -47,23 +46,32 @@ lookup_user(File, Field, Value) ->
       {error, {user_not_found, Value}}
   end.
 
-%% hash = bcrypt password hash
-%% TODO: test me
-write_user(File, User, Hash) ->
+write_user_field(File, Field, UserId, Value) when is_atom(Field) ->
   {ok, Terms} = file:consult(File),
   [{users, Users}|_] = Terms,
-  NewUsers = lists:keystore(User, 1, Users, {User, Hash}),
+  OldUser = lists:keyfind(UserId, 2, Users),
+  NewUser = new_user(Field, Value, OldUser),
+  NewUsers = lists:keystore(UserId, 2, Users, NewUser),
   write_users(File, NewUsers).
 
 write_users(File, Users) ->
   Data = {users, Users},
   ok = file:write_file(File, io_lib:format("~p.~n", [Data])).
 
-write_cookie_hash(File, UserId, CookieHash) ->
-  io:format("~nFile: ~p~nUserId: ~p~nCookieHash: ~p~n~n", [File, UserId, CookieHash]),
-  {ok, Terms} = file:consult(File),
-  [{users, Users}|_] = Terms,
-  {user, UserId, Name, Hash, _, Profile, Admin} = lists:keyfind(UserId,2,Users),
-  NewUsers = lists:keystore(UserId, 2, Users,
-      {user, UserId, Name, Hash, CookieHash, Profile, Admin}),
-  write_users(File, NewUsers).
+new_user(user_id, Value, OldUser) ->
+  OldUser#user{id=Value};
+new_user(username, Value, OldUser) ->
+  OldUser#user{user=Value};
+new_user(password_hash, Value, OldUser) ->
+  OldUser#user{hash=Value};
+new_user(cookie_hash, Value, OldUser) ->
+  OldUser#user{cookie=Value};
+new_user(profile, Value, OldUser) ->
+  OldUser#user{profile=Value};
+new_user(admin, Value, OldUser) ->
+  OldUser#user{admin=Value};
+new_user(Field, _Value, _OldUser) ->
+  throw({invalid_field, Field}).
+
+write_user_all(_File, _User=#user{}) ->
+  ok.

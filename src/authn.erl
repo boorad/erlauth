@@ -29,7 +29,8 @@ authenticate(Body, Cookie) ->
           ReqCookieHash ->
             {ok, cookie_auth, User};
           _ ->
-            io:format("cookie hash expired or invalid~n", []),
+            io:format("cookie hash expired or invalid~nRequested: ~p~n"
+                      "In auth store: ~p~n", [ReqCookieHash, CookieHash]),
             authenticate(Body, undefined)
         end;
       _ ->
@@ -41,10 +42,11 @@ authenticate(Body, Cookie) ->
       authenticate(Body, undefined)
   end.
 
-add_user(User, Pass) ->
+add_user(User0=#user{}, Pass) ->
   {ok, Salt} = bcrypt:gen_salt(),
   {ok, Hash} = bcrypt:hashpw(Pass, Salt),
-  erlauth_user:set_user(User, Hash).
+  User = User0#user{hash=Hash},
+  erlauth_user:add_user(User).
 
 %%
 %% internal

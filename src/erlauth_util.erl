@@ -2,7 +2,7 @@
 
 -export([get_value/2, get_value/3, get_config/1]).
 -export([ensure_started/1, user_resp/1, set_cookie/3, get_cookie_hash/0]).
--export([to_hex/1]).
+-export([to_binary/1, to_int/1, to_list/1, to_float/1, to_atom/1, to_hex/1]).
 
 -include("erlauth.hrl").
 
@@ -55,6 +55,34 @@ to_hex(Bin) when is_binary(Bin) ->
     to_hex(binary_to_list(Bin));
 to_hex([H|T]) ->
     [to_digit(H div 16), to_digit(H rem 16) | to_hex(T)].
+
+to_binary(undefined)            -> undefined;
+to_binary(V) when is_integer(V) -> to_binary(?i2l(V));
+to_binary(V) when is_list(V)    -> to_binary(?l2b(V));
+to_binary(V) when is_float(V)   -> to_binary(float_to_list(V));
+to_binary(V) when is_binary(V)  -> V.
+
+to_int(undefined)            -> undefined;
+to_int(V) when is_float(V)   -> round(V);
+to_int(V) when is_integer(V) -> V;
+to_int(V) when is_list(V)    -> ?l2i(V);
+to_int(V) when is_binary(V)  -> to_int(?b2l(V)).
+
+to_list(undefined)            -> undefined;
+to_list(V) when is_integer(V) -> integer_to_list(V);
+to_list(V) when is_list(V)    -> V;
+to_list(V) when is_binary(V)  -> ?b2l(V);
+to_list(V) when is_atom(V)    -> ?a2l(V).
+
+to_float(undefined)            -> undefined;
+to_float(V) when is_integer(V) -> V + 0.0;
+to_float(V) when is_list(V)    -> list_to_float(V);
+to_float(V) when is_binary(V)  -> to_float(?b2l(V)).
+
+to_atom(undefined)         -> undefined;
+to_atom(V) when is_atom(V) -> V;
+to_atom(V) when is_list(V) -> list_to_atom(V);
+to_atom(V)                 -> to_atom(to_list(V)).
 
 %%
 %% internal

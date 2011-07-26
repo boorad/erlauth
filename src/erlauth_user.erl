@@ -1,7 +1,6 @@
 -module(erlauth_user).
 
--export([get_user/2, set_user/2,
-         set_cookie_hash/2]).
+-export([get_user/2, update_user/3, add_user/1]).
 
 %%
 %% api
@@ -10,11 +9,11 @@
 get_user(Field, User) ->
   execute(get_user, [Field, User]).
 
-set_user(User, Hash) ->
-  execute(set_user, [User, Hash]).
+update_user(Field, UserId, Value) ->
+  execute(update_user, [Field, UserId, Value]).
 
-set_cookie_hash(UserId, CookieHash) ->
-  execute(set_cookie_hash, [UserId, CookieHash]).
+add_user(User) ->
+  execute(add_user, [User]).
 
 %%
 %% internal
