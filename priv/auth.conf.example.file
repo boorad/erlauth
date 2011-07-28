@@ -1,5 +1,5 @@
 %%-*- mode: erlang -*-
 {auth_config, [
-  {auth_store_module, auth_store_file},
+  {auth_store_module, erlauth_store_file},
   {auth_file, "auth.db"}
  ]}.

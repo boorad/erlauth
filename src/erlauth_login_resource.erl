@@ -1,4 +1,4 @@
--module(auth_resource).
+-module(erlauth_login_resource).
 
 -export([init/1,
          allowed_methods/2,
@@ -19,7 +19,7 @@ allowed_methods(RD, Context) ->
   {['POST'], RD, Context}.
 
 content_types_provided(RD, Ctx) ->
-  {[{"application/erlauth-v1+json", process_post}], RD, Ctx}.
+  {[{?MIME_TYPE, process_post}], RD, Ctx}.
 
 process_post(RD, Context) ->
   Body = mochiweb_util:parse_qs(wrq:req_body(RD)),

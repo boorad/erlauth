@@ -1,4 +1,8 @@
 
+%% custom mime-type and accept header
+%% http://barelyenough.org/blog/2008/05/versioning-rest-web-services/
+-define(MIME_TYPE, "application/erlauth-v1+json").
+
 -define(COOKIE, "AuthSession").
 
 -define(t2b(T), term_to_binary(T)).

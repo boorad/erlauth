@@ -5,4 +5,5 @@ ebin/*
 deps/*
 priv/log/*
 src/priv/log/*
+priv/auth.conf
 priv/auth.db

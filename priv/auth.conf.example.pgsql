@@ -1,6 +1,6 @@
 %%-*- mode: erlang -*-
 {auth_config, [
-  {auth_store_module, auth_store_pgsql},
+  {auth_store_module, erlauth_store_pgsql},
   {user_table_fields, [
     {user_id, "user_id"},
     {username, "username"},

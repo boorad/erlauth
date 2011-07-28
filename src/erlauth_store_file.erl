@@ -1,4 +1,4 @@
--module(auth_store_file).
+-module(erlauth_store_file).
 
 -export([get_user/2, update_user/3, add_user/1]).
 

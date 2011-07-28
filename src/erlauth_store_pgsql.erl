@@ -1,4 +1,4 @@
--module(auth_store_pgsql).
+-module(erlauth_store_pgsql).
 
 -export([get_user/2, update_user/3, add_user/1]).
 
