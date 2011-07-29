@@ -15,27 +15,14 @@ authenticate(no_body, undefined) ->
 authenticate(Body, undefined) ->
   case get_creds(Body) of
     {ok, User, Pass} ->
-      int_authn(User, Pass);
+      creds_authn(User, Pass);
     _ ->
       forbidden
   end;
 authenticate(Body, Cookie) ->
   try
     StrCookie = base64:decode_to_string(Cookie),
-    case string:tokens(StrCookie, ":") of
-      [Id, ReqCookieHash] ->
-        {ok,User=#user{cookie=CookieHash}} = erlauth_user:get_user(id,?l2i(Id)),
-        case CookieHash of
-          ReqCookieHash ->
-            {ok, cookie_auth, User};
-          _ ->
-            io:format("cookie hash expired or invalid~nRequested: ~p~n"
-                      "In auth store: ~p~n", [ReqCookieHash, CookieHash]),
-            authenticate(Body, undefined)
-        end;
-      _ ->
-        authenticate(Body, undefined)
-    end
+    cookie_authn(Body, string:tokens(StrCookie, ":"))
   catch
     _:Err ->
       io:format("cookie auth error: ~p~n~p~n", [Err, erlang:get_stacktrace()]),
@@ -53,7 +40,7 @@ add_user(User0=#user{}, Pass) ->
 %%
 
 %% try password against pwd_hash in #user and yay/nay this authn request
-int_authn(User, Pass) ->
+creds_authn(User, Pass) ->
   try
     {ok, Return=#user{hash=Hash}} = erlauth_user:get_user(name, User),
     case bcrypt:hashpw(Pass, Hash) of
@@ -67,7 +54,6 @@ int_authn(User, Pass) ->
       forbidden
   end.
 
-
 get_creds(Body) ->
   try
     {ok,
@@ -77,3 +63,17 @@ get_creds(Body) ->
     _:Error ->
       {error, Error}
   end.
+
+%% try cookie against cookie_hash in #user and yay/nay this authn request
+cookie_authn(Body, [Id, ReqCookieHash]) ->
+  {ok,User=#user{cookie=CookieHash}} = erlauth_user:get_user(id,?l2i(Id)),
+  case CookieHash of
+    ReqCookieHash ->
+      {ok, cookie_auth, User};
+    _ ->
+      io:format("cookie hash expired or invalid~nRequested: ~p~n"
+                "In auth store: ~p~n", [ReqCookieHash, CookieHash]),
+      authenticate(Body, undefined)
+  end;
+cookie_authn(Body, _) ->
+  authenticate(Body, undefined).
