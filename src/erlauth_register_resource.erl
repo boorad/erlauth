@@ -56,7 +56,7 @@ process_post(_RD, _Context) ->
 password_match(_, _Pass1, _Pass1, _) ->
   ok;
 password_match(_,_,_,_) ->
-  "Password match_failed".
+  "Password match failed".
 
 blank_fields(undefined, _, _, _) ->
   "Blank username";
@@ -68,3 +68,17 @@ blank_fields(_, _, _, undefined) ->
   "Blank profile";
 blank_fields(_, _, _, _) ->
   ok.
+
+
+%%
+%% tests
+%%
+-include_lib("eunit/include/eunit.hrl").
+-ifdef(TEST).
+
+password_match_test() ->
+  ?assertEqual(ok, password_match(nil, "hey", "hey", nil)),
+  ?assertEqual("Password match failed", password_match(nil, "hey", "guys", nil)),
+  ok.
+
+-endif.
