@@ -15,6 +15,7 @@ released under Apache License, Version 2.0
 (relative paths)
 
 endpoint | method | Accept header / Content-Type
+------------- | ------------- | -------------
 register | POST | application/erlauth-v1+json
 login | POST | application/erlauth-v1+json
 user/{user_id} | GET, PUT | application/erlauth-v1+json
