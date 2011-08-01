@@ -16,7 +16,8 @@
   {applications, [
                   kernel,
                   stdlib,
-                  crypto
+                  crypto,
+                  bcrypt
                  ]},
   {mod, { erlauth_app, []}},
   {env, []}
