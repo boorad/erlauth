@@ -9,7 +9,9 @@
         ]).
 
 -include("erlauth.hrl").
--include_lib("webmachine/include/webmachine.hrl").
+
+-define(REGISTER_FIELDS, ["register_username", "register_password1",
+                          "register_password2", "register_profile"]).
 
 %%
 %% api
@@ -26,32 +28,27 @@ content_types_provided(RD, Ctx) ->
 %% so this seems like a shitshow :|
 malformed_request(RD, Ctx) ->
   Body = mochiweb_util:parse_qs(wrq:req_body(RD)),
-  Fields = ["register_username", "register_password1", "register_password2",
-            "register_profile"],
   A = lists:map(fun(F) ->
     erlauth_util:get_value(F, Body)
-  end, Fields),
+  end, ?REGISTER_FIELDS),
   Tests = [fun password_match/4, fun blank_fields/4],
   %% run validation tests on post body field values
   Results = lists:map(fun(F) -> erlang:apply(F, A) end, Tests),
-  case lists:filter(fun(R) -> (R =:= ok) end, Results) of
-    [] -> {false, RD, Ctx};
+  case strip_oks(Results) of
+    []    -> {false, RD, Ctx};
     Fails -> {true, RD, [{validation_errors, Fails}|Ctx]}
   end.
 
-%% TODO: ask about this
-%post_is_create(RD, Ctx) ->
-%  {true, RD, Ctx}.
-%
-%create_path(RD, Ctx) ->
-%  ok.
-
-process_post(_RD, _Context) ->
+process_post(_RD, _Ctx) ->
   ok.
 
 %%
 %% internal
 %%
+
+strip_oks(Results) ->
+  io:format("results: ~p~n", [Results]),
+  lists:filter(fun(R) -> (R =/= ok) end, Results).
 
 password_match(_, _Pass1, _Pass1, _) ->
   ok;
@@ -80,5 +77,8 @@ password_match_test() ->
   ?assertEqual(ok, password_match(nil, "hey", "hey", nil)),
   ?assertEqual("Password match failed", password_match(nil, "hey", "guys", nil)),
   ok.
+
+strip_oks_test() ->
+  ?assertEqual([], strip_oks([ok, ok])).
 
 -endif.
