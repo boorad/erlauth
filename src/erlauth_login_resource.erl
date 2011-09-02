@@ -7,7 +7,6 @@
         ]).
 
 -include("erlauth.hrl").
--include_lib("webmachine/include/webmachine.hrl").
 
 %%
 %% api

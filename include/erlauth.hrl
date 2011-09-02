@@ -1,3 +1,4 @@
+-include_lib("webmachine/include/webmachine.hrl").
 
 %% custom mime-type and accept header
 %% http://barelyenough.org/blog/2008/05/versioning-rest-web-services/
@@ -20,9 +21,10 @@
           hash,           %% password bcrypt hash
           cookie,         %% cookie hash
           profile,        %% ejson term, anything you want
-          admin=false     %% boolean, true if this user is an admin
+          roles=[]        %% list of app roles (atoms)
          }).
 
 -type body() :: list().
 -type cookie() :: string().
 -type authtype() :: creds_auth | cookie_auth.
+-type user() :: #user{}.

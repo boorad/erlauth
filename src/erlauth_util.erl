@@ -2,6 +2,7 @@
 
 -export([get_value/2, get_value/3, get_config/1]).
 -export([ensure_started/1, user_resp/1, set_cookie/3, get_cookie_hash/0]).
+-export([add_to_context/2]).
 -export([to_binary/1, to_int/1, to_list/1, to_float/1, to_atom/1, to_hex/1]).
 
 -include("erlauth.hrl").
@@ -48,6 +49,14 @@ set_cookie(CookieName, #user{id=Id, cookie=CookieHash}, RD) ->
 get_cookie_hash() ->
   BinRandom = crypto:rand_bytes(20),
   to_hex(BinRandom).
+
+add_to_context({Key, Value}, Ctx) when is_list(Ctx) ->
+  lists:keystore(Key, 1, Ctx, {Key, Value});
+add_to_context(Term, _Ctx) ->
+  %% not sure what's in context here if it's not a list,
+  %% so starting over with fresh one.
+  [Term].
+
 
 to_hex([]) ->
     [];
