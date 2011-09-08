@@ -17,7 +17,9 @@
 %% api
 %%
 
-init([]) -> {ok, undefined}.
+init(Config) ->
+  %% {{trace, "/tmp"}, Config}. %% debugging code
+  {ok, Config}.                 %% regular code
 
 allowed_methods(RD, Context) ->
   {['POST'], RD, Context}.
@@ -35,19 +37,53 @@ malformed_request(RD, Ctx) ->
   %% run validation tests on post body field values
   Results = lists:map(fun(F) -> erlang:apply(F, A) end, Tests),
   case strip_oks(Results) of
-    []    -> {false, RD, Ctx};
-    Fails -> {true, RD, [{validation_errors, Fails}|Ctx]}
+    [] ->
+      User = make_new_user(A),
+      {false, RD, [{register, User}|Ctx]};
+    Fails ->
+      {true, RD, [{validation_errors, Fails}|Ctx]}
   end.
 
-process_post(_RD, _Ctx) ->
-  ok.
+process_post(RD, Ctx) ->
+  User = #user{user=Username} = erlauth_util:get_value(register, Ctx),
+  %% fetch of username should return 'not found'
+  case erlauth_user:get_user(name, Username) of
+    {error, {user_not_found, Username}} ->
+      %% write new user
+      case erlauth_user:add_user(User) of
+        {ok, NewUser} ->
+          %% return ok
+          Resp = erlauth_util:user_resp(NewUser),
+          {true, wrq:append_to_response_body(Resp, RD), Ctx};
+        {error, Error} ->
+          io:format("/register process_post error: ~p~n", [Error]),
+          Resp = mochijson2:encode(
+                   {struct,
+                    [{error, Error},
+                     {reason, <<"User not created.">>}]}),
+          {{halt, 500}, wrq:append_to_response_body(Resp, RD), Ctx}
+      end;
+    Error ->
+      io:format("/register process_post conflict: ~p~n", [Error]),
+      Resp = mochijson2:encode(
+               {struct,
+                [{error, <<"conflict">>},
+                 {reason, <<"Username is in use.">>}]}),
+      {{halt, 409}, wrq:append_to_response_body(Resp, RD), Ctx}
+  end.
 
 %%
 %% internal
 %%
 
+make_new_user(A) ->
+  [RegUser, RegPass, RegPass, RegProfile0] = A,
+  {ok, Salt} = bcrypt:gen_salt(),
+  {ok, RegPassHash} = bcrypt:hashpw(RegPass, Salt),
+  RegProfile = mochijson2:decode(RegProfile0),
+  #user{user=RegUser, hash=RegPassHash, profile=RegProfile}.
+
 strip_oks(Results) ->
-  io:format("results: ~p~n", [Results]),
   lists:filter(fun(R) -> (R =/= ok) end, Results).
 
 password_match(_, _Pass1, _Pass1, _) ->

@@ -36,19 +36,17 @@ file_op(F,A) ->
   end.
 
 lookup_user(File, Field, Value) ->
-  {ok, Terms} = file:consult(File),
-  [{users, Users}|_] = Terms,
+  Users = get_users(File),
   case lists:keyfind(Value, Field, Users) of
-    {user, Id, Username, Hash, Cookie, Profile, Admin} ->
+    {user, Id, Username, Hash, Cookie, Profile, Roles} ->
       {ok, #user{id=Id, user=Username, hash=Hash, cookie=Cookie,
-                 profile=Profile, admin=Admin}};
+                 profile=Profile, roles=Roles}};
     false ->
       {error, {user_not_found, Value}}
   end.
 
 write_user_field(File, Field, UserId, Value) when is_atom(Field) ->
-  {ok, Terms} = file:consult(File),
-  [{users, Users}|_] = Terms,
+  Users = get_users(File),
   OldUser = lists:keyfind(UserId, 2, Users),
   NewUser = new_user(Field, Value, OldUser),
   NewUsers = lists:keystore(UserId, 2, Users, NewUser),
@@ -57,6 +55,12 @@ write_user_field(File, Field, UserId, Value) when is_atom(Field) ->
 write_users(File, Users) ->
   Data = {users, Users},
   ok = file:write_file(File, io_lib:format("~p.~n", [Data])).
+
+get_users(File) ->
+  {ok, Terms} = file:consult(File),
+  [{users, Users}|_] = Terms,
+  Users.
+
 
 new_user(user_id, Value, OldUser) ->
   OldUser#user{id=Value};
@@ -68,10 +72,29 @@ new_user(cookie_hash, Value, OldUser) ->
   OldUser#user{cookie=Value};
 new_user(profile, Value, OldUser) ->
   OldUser#user{profile=Value};
-new_user(admin, Value, OldUser) ->
-  OldUser#user{admin=Value};
+new_user(roles, Value, OldUser) ->
+  OldUser#user{roles=Value};
 new_user(Field, _Value, _OldUser) ->
   throw({invalid_field, Field}).
 
-write_user_all(_File, _User=#user{}) ->
-  ok.
+%% This could have an issue with multiple writes at the same time
+%% You've been warned.  Maybe open 'exclusive' ?
+write_user_all(File, User=#user{id=undefined}) ->
+  %% get next id in sequence and add one
+  Users = get_users(File),
+  MaxId = lists:foldl(fun(#user{id=Id}, Max) ->
+                          erlang:max(Id, Max)
+                      end, 0, Users),
+  write_user_all(File, User#user{id=MaxId+1}, Users);
+write_user_all(File, NewUser) ->
+  write_user_all(File, NewUser, nil).
+
+write_user_all(File, NewUser, nil) ->
+  Users = get_users(File),
+  write_user_all(File, NewUser, Users);
+write_user_all(File, NewUser = #user{id=NewId}, Users) ->
+  NewUsers = lists:keystore(NewId, 2, Users, NewUser),
+  case write_users(File, NewUsers) of
+    ok -> {ok, NewUser};
+    _  -> {error, user_not_written}
+  end.
